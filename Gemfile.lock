@@ -4,7 +4,9 @@ GEM
     bson (1.9.1)
     bson_ext (1.9.1)
       bson (~> 1.9.1)
-    forgery (0.5.0)
+    faker (1.2.0)
+      i18n (~> 0.5)
+    i18n (0.6.4)
     mongo (1.9.1)
       bson (~> 1.9.1)
     rake (10.0.3)
@@ -14,6 +16,6 @@ PLATFORMS
 
 DEPENDENCIES
   bson_ext
-  forgery
+  faker
   mongo
   rake

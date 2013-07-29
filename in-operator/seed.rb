@@ -1,5 +1,5 @@
 require "mongo"
-require "forgery"
+require "faker"
 
 db = Mongo::MongoClient.new("localhost", 30001).db("mongodb-with-style")
 
@@ -8,7 +8,7 @@ jobs = ["Carpenter", "Journalist", "Farmer", "Artist", "Educator", "Dancer", "La
 db["users"].drop
 db["users"].insert(
   1000.times.map {
-    {:name => Forgery::Name.first_name, :surname => Forgery::Name.last_name, :job => jobs.sample}
+    {:name => Faker::Name.first_name, :surname => Faker::Name.last_name, :job => jobs.sample}
   }
 )
 
