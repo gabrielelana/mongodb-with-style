@@ -5,5 +5,7 @@
 nnoremap <silent> <Leader>r :call RunCurrentFile()<CR>
 
 function! RunCurrentFile()
+  setlocal nocursorline
   exec '!rake run\[' . expand('%:p') . '\]'
+  setlocal cursorline
 endfunction
