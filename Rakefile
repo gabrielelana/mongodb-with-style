@@ -4,14 +4,14 @@ BIN_DIRECTORY = File.join(BASE_DIRECTORY, ".bin")
 DATA_DIRECTORY = File.join(BASE_DIRECTORY, ".data")
 LOG_DIRECTORY = File.join(BASE_DIRECTORY, ".log")
 
-DB_NAME = "db-01"
+DB_NAME = "mongodb-with-style"
 DB_DIRECTORY = File.join(DATA_DIRECTORY, DB_NAME)
 DB_LOG = File.join(LOG_DIRECTORY, DB_NAME)
 DB_PORT = 30001
 
-verbose(true)
+verbose(false)
 
-task :start => [ :clean, :prepare ] do
+task :start => [:clean, :prepare] do
   mkdir_p DB_DIRECTORY
   sh "#{BIN_DIRECTORY}/mongod " \
     "--dbpath #{DB_DIRECTORY} " \
@@ -28,9 +28,20 @@ task :stop do
   end
 end
 
-task :restart => [ :stop, :start ]
+task :run, [:script] => [:up] do |task, args|
+  initialize = script = ''
+  script = args.script if not args.script.nil? and File.exists?(args.script)
+  initialize = "--eval 'chatty(cd(\"#{File.dirname(script)}\"))'" unless script.empty?
+  sh "#{BIN_DIRECTORY}/mongo --quiet 127.0.0.1:#{DB_PORT}/#{DB_NAME} #{initialize} #{script}"
+end
 
-task :up => :prepare do
+task :shell => [:up] do |task, args|
+  sh "#{BIN_DIRECTORY}/mongo --quiet --shell 127.0.0.1:#{DB_PORT}/#{DB_NAME}"
+end
+
+task :restart => [:stop, :start]
+
+task :up => [:prepare] do
   Rake::Task["start"].invoke unless started?
 end
 
@@ -39,7 +50,8 @@ task :prepare do
   mkdir_p [DATA_DIRECTORY, LOG_DIRECTORY]
 end
 
-task :clean => :stop do
+task :clean => [:stop] do
+  sleep 0.250
   rm_rf [DATA_DIRECTORY, LOG_DIRECTORY]
 end
 
