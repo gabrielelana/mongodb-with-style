@@ -11,6 +11,7 @@ DB_PORT = 30001
 
 verbose(false)
 
+desc "Start MongoDB server"
 task :start => [:clean, :prepare] do
   mkdir_p DB_DIRECTORY
   sh "#{BIN_DIRECTORY}/mongod " \
@@ -20,6 +21,7 @@ task :start => [:clean, :prepare] do
     "--port #{DB_PORT}"
 end
 
+desc "Stop MongoDB server"
 task :stop do
   if started?
     sh "#{BIN_DIRECTORY}/mongo --quiet --port #{DB_PORT} " \
@@ -28,26 +30,35 @@ task :stop do
   end
 end
 
+desc "Run [script] on MongoDB server"
 task :run, [:script] => [:up] do |task, args|
-  initialize = script = ''
+  initialize = script = ""
   script = args.script if not args.script.nil? and File.exists?(args.script)
   initialize = "--eval 'chatty(cd(\"#{File.dirname(script)}\"))'" unless script.empty?
   sh "#{BIN_DIRECTORY}/mongo --quiet 127.0.0.1:#{DB_PORT}/#{DB_NAME} #{initialize} #{script}"
 end
 
+desc "Open shell on MongoDB server"
 task :shell => [:up] do |task, args|
   sh "#{BIN_DIRECTORY}/mongo --quiet --shell 127.0.0.1:#{DB_PORT}/#{DB_NAME}"
 end
 
+desc "Create datasets to play with"
 task :seed => [:up] do
-  Dir['*/seed.json'].each do |seed|
+  Dir["*/seed.json"].each do |seed|
     puts "import #{seed}"
     sh "#{BIN_DIRECTORY}/mongoimport --port=#{DB_PORT} --db=#{DB_NAME} --drop --collection=#{File.dirname(seed)} --file=#{seed}"
   end
-  Dir['*/seed.rb'].each do |seed|
+  Dir["*/seed.rb"].each do |seed|
     puts "run #{seed}"
     ruby seed
   end
+end
+
+desc "Clean up, as if we were never here"
+task :clean => [:stop] do
+  sleep 0.250
+  rm_rf [DATA_DIRECTORY, LOG_DIRECTORY]
 end
 
 task :restart => [:stop, :start]
@@ -57,13 +68,10 @@ task :up => [:prepare] do
 end
 
 task :prepare do
-  raise '.bin directory must contain MongoDB executables' unless Dir.exists?(BIN_DIRECTORY)
+  raise ".bin directory must contain MongoDB executables" unless (
+    Dir.exists?(BIN_DIRECTORY) and File.exists?(File.join(BIN_DIRECTORY, 'mongo'))
+  )
   mkdir_p [DATA_DIRECTORY, LOG_DIRECTORY]
-end
-
-task :clean => [:stop] do
-  sleep 0.250
-  rm_rf [DATA_DIRECTORY, LOG_DIRECTORY]
 end
 
 def started?
