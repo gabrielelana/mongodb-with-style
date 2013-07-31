@@ -44,6 +44,10 @@ task :seed => [:up] do
     puts "import #{seed}"
     sh "#{BIN_DIRECTORY}/mongoimport --port=#{DB_PORT} --db=#{DB_NAME} --drop --collection=#{File.dirname(seed)} --file=#{seed}"
   end
+  Dir['*/seed.rb'].each do |seed|
+    puts "run #{seed}"
+    ruby seed
+  end
 end
 
 task :restart => [:stop, :start]
