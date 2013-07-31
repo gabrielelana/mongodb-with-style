@@ -39,6 +39,13 @@ task :shell => [:up] do |task, args|
   sh "#{BIN_DIRECTORY}/mongo --quiet --shell 127.0.0.1:#{DB_PORT}/#{DB_NAME}"
 end
 
+task :seed => [:up] do
+  Dir['*/seed.json'].each do |seed|
+    puts "import #{seed}"
+    sh "#{BIN_DIRECTORY}/mongoimport --port=#{DB_PORT} --db=#{DB_NAME} --drop --collection=#{File.dirname(seed)} --file=#{seed}"
+  end
+end
+
 task :restart => [:stop, :start]
 
 task :up => [:prepare] do
