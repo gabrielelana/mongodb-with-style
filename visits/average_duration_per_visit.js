@@ -1,18 +1,23 @@
-// days we are interested in
-days = ['20130720', '20130721', '20130722', '20130711']
+load('../lib/moment.js')
+load('../lib/lodash.js')
 
-// url we are interested in
-url = db.visits.findOne().url
+// in the last 5 days
+days = _(0).range(5).map(function(daysAgo) {
+  return moment().subtract('days', daysAgo).format('YYYYMMDD')
+})
 
-// generate the ids of the documents we are interesed in
-ids = days.map(function(day) {return [url, 'day', day].join('-')})
+// a random url
+url = db.visits.find().skip(_.random(0, db.visits.count())).limit(1).next().digest
 
-// average the duration of the visits of the url in given days
+// what is the duration average of the visits?
+
+ids = days.map(function(day) {return [url, day].join('-')})
+
 duration = db.visits.aggregate([
-  {$match: {_id: {$in: ids}}},
+  {$match: {_id: {$in: ids.valueOf()}}},
   {$project: {_id: 0, url: 1, hits: 1, duration: 1}},
   {$group: {_id: "$url", hits: {$sum: "$hits"}, duration: {$sum: "$duration"}}},
-  {$project: {_id: 0, average_duration: {$divide: ["$duration", "$hits"]}}}
+  {$project: {_id: 0, url: "$_id", average_duration: {$divide: ["$duration", "$hits"]}}}
 ])
 
 printjson(duration)

@@ -3,30 +3,24 @@ require "faker"
 require "digest"
 require "active_support/all"
 
-db = Mongo::MongoClient.new("localhost", 30001).db("mongodb-with-style")
+chaos = Random.new
+urls = 250.times.map {Faker::Internet.url}
 
+db = Mongo::MongoClient.new("localhost", 30001).db("mongodb-with-style")
 db["visits"].drop
 
-urls = 500.times.map{ Digest::MD5.hexdigest(Faker::Internet.url) }
-
-30.times do |n|
+10.times do |n|
   today = n.days.ago
   puts "Generate vists for #{today.strftime("%F")}"
-  duration = Random.new
-  formats = [ 
-    ['year', today.strftime("%Y")],
-    ['month', today.strftime("%Y%m")],
-    ['week', today.strftime("%Yw%U")],
-    ['day', today.strftime("%Y%m%d")]
-  ]
-  1_000.times do
-    url = urls.sample     
-    formats.each do |at|
-      db["visits"].update(
-        {:_id => [url, at].flatten.join('-'), :url => url},
-        {:$inc => {:hits => 1, :duration => duration.rand(1..60)}},
-        :upsert => true
-      )
-    end
+
+  chaos.rand(200..1000).times do
+    visited_url = urls.sample
+    visites_url_digest = Digest::MD5.hexdigest(visited_url)
+    today_formatted = today.strftime("%Y%m%d")
+    db["visits"].update(
+      {:_id => [visites_url_digest, today_formatted].join("-"), :url => visited_url, :digest => visites_url_digest, :at => today_formatted},
+      {:$inc => {:hits => 1, :duration => chaos.rand(1..60)}},
+      :upsert => true
+    )
   end
 end
