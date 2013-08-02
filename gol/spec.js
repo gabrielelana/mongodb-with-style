@@ -1,15 +1,7 @@
-load('../lib/lodash.js')
 load('gol.js')
 
 
-_.mixin({
-  splat: function(collection, callback, context) {
-    return callback.apply(context, collection)
-  }
-});
-
-
-(function(global) {
+;(function(global) {
 
   return [
     function mapIsDefined() {
@@ -236,8 +228,6 @@ _.mixin({
   ]
 
 })(this).forEach(function(f) { 
-  _(f.toString().match(/function (\w+)/)).splat(function(all, name) {
-    print('>>> ' + name)
-    f()
-  })
+  print('>>> ' + f.name)
+  f()
 })
