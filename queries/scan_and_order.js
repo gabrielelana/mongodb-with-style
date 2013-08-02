@@ -36,6 +36,7 @@ print('With one compound index in reverse order')
 assert(/reverse$/.test(result.cursor), 'it uses the index in reverse order')
 assert(!result.scanAndOrder, 'sort is done with index yay!')
 
+
 // if you only need to count then you can select only fields in index
 db.transactions.dropIndexes()
 db.transactions.ensureIndex({user: 1, created_at: 1})
@@ -45,3 +46,15 @@ print('Only compund index to do everything')
 assert.eq(0, result.nscannedObjects, 'no need to load found objects in memory')
 assert(!result.scanAndOrder, 'sort is done with index yay!')
 assert(result.indexOnly, 'all done with the index!')
+
+
+// if you need to sort on multiple fields, 'index sort order' matters
+db.transactions.dropIndexes()
+db.transactions.ensureIndex({user: 1, amount: 1, created_at: 1})
+
+print('With sort on multiple fields, order matters')
+result = db.transactions.find({user: 'gabriele'}, {_id: 1}).sort({amount: 1, created_at: 1}).explain()
+assert(!result.scanAndOrder, 'sort is done with the index yay!')
+
+result = db.transactions.find({user: 'gabriele'}, {_id: 1}).sort({amount: 1, created_at: -11}).explain()
+assert(result.scanAndOrder, 'sort is done in memory')
